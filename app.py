@@ -5,12 +5,18 @@ from Farsi_audio_to_English_transcript import (
     transcribe_farsi,
     translate_farsi_to_english,
     generate_english_audio_gpt4o,
-    extract_video_id
+    extract_video_id,
+    save_to_file
 )
-from openai import OpenAI
+import openai
+from dotenv import load_dotenv
+import time
 
-# Initialize OpenAI client
-client = OpenAI()
+# Load environment variables
+load_dotenv()
+
+# Configure OpenAI
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Set page config
 st.set_page_config(
@@ -187,6 +193,8 @@ if 'video_id' not in st.session_state:
     st.session_state.video_id = None
 if 'summary_text' not in st.session_state:
     st.session_state.summary_text = None
+if 'processing_status' not in st.session_state:
+    st.session_state.processing_status = {}
 
 # Create output directory if it doesn't exist
 os.makedirs('output', exist_ok=True)
@@ -233,6 +241,25 @@ quality_check = st.checkbox("Enable Quality Checks", value=True, help="Enable th
 # Process button
 if st.button("🚀 Process Everything!", disabled=not url):
     try:
+        # Initialize progress tracking
+        st.session_state.processing_status = {
+            'audio': False,
+            'transcription': False,
+            'translation': False,
+            'english_audio': False,
+            'summary': False
+        }
+        
+        # Create progress bar
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        # Update progress function
+        def update_progress(step, total_steps=5):
+            progress = (step / total_steps) * 100
+            progress_bar.progress(progress)
+            status_text.text(f"Processing step {step} of {total_steps}...")
+        
         with st.spinner("🎵 Processing audio..."):
             video_id = extract_video_id(url)
             if not video_id:
@@ -242,12 +269,16 @@ if st.button("🚀 Process Everything!", disabled=not url):
                 audio_file = os.path.join('output', f"{str(video_id)}.mp3")
                 download_youtube_audio(url, audio_file)
                 st.session_state.audio_file = audio_file
+                st.session_state.processing_status['audio'] = True
+                update_progress(1)
                 st.success("✅ Audio processed!")
         
         with st.spinner("🗣️ Transcribing to Farsi..."):
             farsi_text = transcribe_farsi(st.session_state.audio_file, quality_check=quality_check)
             st.session_state.farsi_text = farsi_text
             save_to_file(farsi_text, os.path.join('output', f"{st.session_state.video_id}_farsi.txt"))
+            st.session_state.processing_status['transcription'] = True
+            update_progress(2)
             st.success("✅ Transcription completed!")
         
         with st.spinner("🌍 Translating to English..."):
@@ -267,11 +298,15 @@ if st.button("🚀 Process Everything!", disabled=not url):
             english_text = response.choices[0].message.content
             st.session_state.english_text = english_text
             save_to_file(english_text, os.path.join('output', f"{st.session_state.video_id}_english.txt"))
+            st.session_state.processing_status['translation'] = True
+            update_progress(3)
             st.success("✅ Translation completed!")
         
         with st.spinner("🔊 Generating English audio..."):
             english_audio_file = os.path.join('output', f"{str(video_id)}_english.wav")
             generate_english_audio_gpt4o(st.session_state.english_text, english_audio_file)
+            st.session_state.processing_status['english_audio'] = True
+            update_progress(4)
             st.success("✅ English audio generated!")
         
         with st.spinner("📝 Creating summary..."):
@@ -291,10 +326,18 @@ if st.button("🚀 Process Everything!", disabled=not url):
             summary_text = response.choices[0].message.content
             st.session_state.summary_text = summary_text
             save_to_file(summary_text, os.path.join('output', f"{st.session_state.video_id}_summary.txt"))
+            st.session_state.processing_status['summary'] = True
+            update_progress(5)
             st.success("✅ Summary generated!")
+            
+        # Clear progress indicators
+        progress_bar.empty()
+        status_text.empty()
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
+        st.error("Please check the console for more details.")
+        raise e
 
 # Display results in organized sections
 st.markdown("## 📝 Results")
@@ -341,6 +384,7 @@ if st.button("🗑️ Clear All"):
     st.session_state.english_text = None
     st.session_state.video_id = None
     st.session_state.summary_text = None
+    st.session_state.processing_status = {}
     st.experimental_rerun()
 
 # Footer
