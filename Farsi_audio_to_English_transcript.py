@@ -302,10 +302,17 @@ def generate_english_audio_gpt4o(text, output_path, voice="alloy"):
         f.write(wav_bytes)
     print(f"✅ Audio saved to {output_path}")
 
-def save_to_file(content, filename):
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(content)
-    print(f"✅ Saved to {filename}")
+def save_to_file(text, filename):
+    """Save text to a file in the output directory"""
+    # Ensure the output directory exists
+    os.makedirs('output', exist_ok=True)
+    
+    # Create the full path in the output directory
+    filepath = os.path.join('output', filename)
+    
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(f"Saved text to {filepath}")
 
 def extract_video_id(url):
     pattern = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
