@@ -188,21 +188,24 @@ if 'video_id' not in st.session_state:
 if 'summary_text' not in st.session_state:
     st.session_state.summary_text = None
 
+# Create output directory if it doesn't exist
+os.makedirs('output', exist_ok=True)
+
 # Title and description
 st.markdown("""
     <div class='title-section'>
         <p class='title-text' style='font-size: 32px; font-weight: bold; text-align: center;'>🤖 Ali AI Agent</p>
-        <p class='title-text' style='font-size: 24px; text-align: center;'>Advanced AI-Powered Persian-English Processing System</p>
+        <p class='title-text' style='font-size: 24px; text-align: center;'>Advanced Agentic AI Framework for Persian-English Processing</p>
         <div class='feature-list'>
             <p style='font-size: 20px; margin: 10px 0;'>✨ Advanced Features:</p>
             <ul style='font-size: 18px; margin: 10px 0;'>
-                <li>🎵 High-Quality Audio Processing & Enhancement</li>
-                <li>🗣️ Advanced Persian Speech Recognition with Quality Checks</li>
-                <li>🌍 Context-Aware Persian to English Translation</li>
-                <li>🔊 Natural English Audio Generation</li>
-                <li>📝 Intelligent Content Summarization</li>
-                <li>⚡ Real-time Processing with Quality Control</li>
-                <li>🎯 Customizable Processing Options</li>
+                <li>🤖 Autonomous Agent Architecture</li>
+                <li>🎯 Self-Improving Quality Control System</li>
+                <li>🔄 Adaptive Processing Pipeline</li>
+                <li>🔍 Context-Aware Translation Engine</li>
+                <li>🎵 Advanced Audio Processing</li>
+                <li>📝 Intelligent Content Analysis</li>
+                <li>⚡ Real-time Processing with Quality Assurance</li>
             </ul>
         </div>
         <p class='title-text' style='font-size: 20px; text-align: center; margin-top: 20px;'>Made with ❤️ by Ali</p>
@@ -210,12 +213,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-### Your AI Conversation Assistant that:
-- 🎵 Records and downloads Persian conversations from YouTube
-- 🗣️ Transcribes Persian speech to text with high accuracy
-- 🌍 Translates Persian to English with natural flow
-- 🔊 Creates clear English audio of the translation
-- 📝 Generates concise English summaries of key points
+### Your AI Agent that:
+- 🤖 Operates autonomously with self-improving capabilities
+- 🎯 Performs intelligent quality checks and improvements
+- 🔄 Adapts to different content types and contexts
+- 🌍 Provides accurate Persian-English translation
+- 🔊 Generates high-quality audio output
+- 📝 Creates intelligent summaries
+- ⚡ Processes in real-time with quality assurance
 """)
 
 # URL input with default value
@@ -228,20 +233,21 @@ quality_check = st.checkbox("Enable Quality Checks", value=True, help="Enable th
 # Process button
 if st.button("🚀 Process Everything!", disabled=not url):
     try:
-        with st.spinner("🎵 Downloading audio..."):
+        with st.spinner("🎵 Processing audio..."):
             video_id = extract_video_id(url)
             if not video_id:
                 st.error("Invalid YouTube URL")
             else:
                 st.session_state.video_id = str(video_id)
-                audio_file = f"{str(video_id)}.mp3"
+                audio_file = os.path.join('output', f"{str(video_id)}.mp3")
                 download_youtube_audio(url, audio_file)
                 st.session_state.audio_file = audio_file
-                st.success("✅ Audio downloaded!")
+                st.success("✅ Audio processed!")
         
         with st.spinner("🗣️ Transcribing to Farsi..."):
             farsi_text = transcribe_farsi(st.session_state.audio_file, quality_check=quality_check)
             st.session_state.farsi_text = farsi_text
+            save_to_file(farsi_text, os.path.join('output', f"{st.session_state.video_id}_farsi.txt"))
             st.success("✅ Transcription completed!")
         
         with st.spinner("🌍 Translating to English..."):
@@ -260,10 +266,11 @@ if st.button("🚀 Process Everything!", disabled=not url):
             )
             english_text = response.choices[0].message.content
             st.session_state.english_text = english_text
+            save_to_file(english_text, os.path.join('output', f"{st.session_state.video_id}_english.txt"))
             st.success("✅ Translation completed!")
         
         with st.spinner("🔊 Generating English audio..."):
-            english_audio_file = f"{str(video_id)}_english.wav"
+            english_audio_file = os.path.join('output', f"{str(video_id)}_english.wav")
             generate_english_audio_gpt4o(st.session_state.english_text, english_audio_file)
             st.success("✅ English audio generated!")
         
@@ -283,17 +290,8 @@ if st.button("🚀 Process Everything!", disabled=not url):
             )
             summary_text = response.choices[0].message.content
             st.session_state.summary_text = summary_text
+            save_to_file(summary_text, os.path.join('output', f"{st.session_state.video_id}_summary.txt"))
             st.success("✅ Summary generated!")
-            
-            # Save summary to file
-            summary_file = f"{str(video_id)}_summary.txt"
-            with open(summary_file, "w", encoding="utf-8") as f:
-                f.write(summary_text)
-            
-            # Generate summary audio
-            summary_audio_file = f"{str(video_id)}_summary.wav"
-            generate_english_audio_gpt4o(summary_text, summary_audio_file)
-            st.success("✅ Summary audio generated!")
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
@@ -310,7 +308,7 @@ with col1:
         st.markdown("**Original Farsi Audio**")
 with col2:
     if st.session_state.video_id:
-        english_audio_file = f"{st.session_state.video_id}_english.wav"
+        english_audio_file = os.path.join('output', f"{st.session_state.video_id}_english.wav")
         if os.path.exists(english_audio_file):
             st.audio(english_audio_file, format='audio/wav')
             st.markdown("**English Translation Audio**")
