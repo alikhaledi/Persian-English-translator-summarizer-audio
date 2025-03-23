@@ -234,6 +234,9 @@ url = st.text_input("Enter YouTube URL:", value=default_url, placeholder="https:
 # Quality check toggle
 quality_check = st.checkbox("Enable Quality Checks", value=True, help="Enable this to perform quality checks and improvements on transcription and translation. Disable for faster processing.")
 
+# Use saved files toggle
+use_saved_files = st.checkbox("Use Saved Files (If Available)", value=False, help="Enable this to use previously saved files instead of making new API calls. This will save time and API usage.")
+
 # Process button
 if st.button("🚀 Process Everything!", disabled=not url):
     try:
@@ -256,79 +259,125 @@ if st.button("🚀 Process Everything!", disabled=not url):
             progress_bar.progress(progress)
             status_text.text(f"Processing step {step} of {total_steps}...")
         
-        with st.spinner("🎵 Processing audio..."):
-            video_id = extract_video_id(url)
-            if not video_id:
-                st.error("Invalid YouTube URL")
+        # Extract video ID
+        video_id = extract_video_id(url)
+        if not video_id:
+            st.error("Invalid YouTube URL")
+        else:
+            st.session_state.video_id = str(video_id)
+            
+            # Check for existing files
+            audio_file = os.path.join('output', f"{str(video_id)}.mp3")
+            farsi_file = os.path.join('output', f"{str(video_id)}_farsi.txt")
+            english_file = os.path.join('output', f"{str(video_id)}_english.txt")
+            english_audio_file = os.path.join('output', f"{str(video_id)}_english.wav")
+            summary_file = os.path.join('output', f"{str(video_id)}_summary.txt")
+            
+            # Process audio
+            if not use_saved_files or not os.path.exists(audio_file):
+                with st.spinner("🎵 Processing audio..."):
+                    download_youtube_audio(url, audio_file)
+                    st.session_state.processing_status['audio'] = True
+                    update_progress(1)
+                    st.success("✅ Audio processed!")
             else:
-                st.session_state.video_id = str(video_id)
-                audio_file = os.path.join('output', f"{str(video_id)}.mp3")
-                download_youtube_audio(url, audio_file)
                 st.session_state.audio_file = audio_file
                 st.session_state.processing_status['audio'] = True
                 update_progress(1)
-                st.success("✅ Audio processed!")
-        
-        with st.spinner("🗣️ Transcribing to Farsi..."):
-            farsi_text = transcribe_farsi(st.session_state.audio_file, quality_check=quality_check)
-            st.session_state.farsi_text = farsi_text
-            save_to_file(farsi_text, os.path.join('output', f"{st.session_state.video_id}_farsi.txt"))
-            st.session_state.processing_status['transcription'] = True
-            update_progress(2)
-            st.success("✅ Transcription completed!")
-        
-        with st.spinner("🌍 Translating to English..."):
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a professional translator specializing in Persian to English translation. Your goal is to produce natural, fluent English that maintains the original meaning while being easy to read and understand. Follow these guidelines:\n1. Use natural English expressions and idioms where appropriate\n2. Maintain the original tone and style\n3. Ensure the translation flows smoothly\n4. Break long sentences into shorter, clearer ones if needed\n5. Preserve any cultural references or specific terminology"
-                    },
-                    {
-                        "role": "user",
-                        "content": farsi_text
-                    }
-                ]
-            )
-            english_text = response.choices[0].message.content
-            st.session_state.english_text = english_text
-            save_to_file(english_text, os.path.join('output', f"{st.session_state.video_id}_english.txt"))
-            st.session_state.processing_status['translation'] = True
-            update_progress(3)
-            st.success("✅ Translation completed!")
-        
-        with st.spinner("🔊 Generating English audio..."):
-            english_audio_file = os.path.join('output', f"{str(video_id)}_english.wav")
-            generate_english_audio_gpt4o(st.session_state.english_text, english_audio_file)
-            st.session_state.processing_status['english_audio'] = True
-            update_progress(4)
-            st.success("✅ English audio generated!")
-        
-        with st.spinner("📝 Creating summary..."):
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Create a clear, concise summary of the following text. Format your response exactly as follows, with each bullet point on its own line using markdown formatting:\n\n**Key Points:**\n\n* First main point\n\n* Second main point\n\n* Third main point\n\n**Key Takeaways:**\n\n* First takeaway\n\n* Second takeaway\n\n* Third takeaway\n\nMake sure each point is specific, actionable, and clearly stated. Each bullet point must be on its own line with a blank line before and after it."
-                    },
-                    {
-                        "role": "user",
-                        "content": st.session_state.english_text
-                    }
-                ]
-            )
-            summary_text = response.choices[0].message.content
-            st.session_state.summary_text = summary_text
-            save_to_file(summary_text, os.path.join('output', f"{st.session_state.video_id}_summary.txt"))
-            st.session_state.processing_status['summary'] = True
-            update_progress(5)
-            st.success("✅ Summary generated!")
+                st.success("✅ Using saved audio file!")
             
-        # Clear progress indicators
-        progress_bar.empty()
-        status_text.empty()
+            # Process transcription
+            if not use_saved_files or not os.path.exists(farsi_file):
+                with st.spinner("🗣️ Transcribing to Farsi..."):
+                    farsi_text = transcribe_farsi(audio_file, quality_check=quality_check)
+                    save_to_file(farsi_text, farsi_file)
+                    st.session_state.processing_status['transcription'] = True
+                    update_progress(2)
+                    st.success("✅ Transcription completed!")
+            else:
+                with open(farsi_file, 'r', encoding='utf-8') as f:
+                    farsi_text = f.read()
+                st.session_state.processing_status['transcription'] = True
+                update_progress(2)
+                st.success("✅ Using saved transcription!")
+            
+            st.session_state.farsi_text = farsi_text
+            
+            # Process translation
+            if not use_saved_files or not os.path.exists(english_file):
+                with st.spinner("🌍 Translating to English..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a professional translator specializing in Persian to English translation. Your goal is to produce natural, fluent English that maintains the original meaning while being easy to read and understand. Follow these guidelines:\n1. Use natural English expressions and idioms where appropriate\n2. Maintain the original tone and style\n3. Ensure the translation flows smoothly\n4. Break long sentences into shorter, clearer ones if needed\n5. Preserve any cultural references or specific terminology"
+                            },
+                            {
+                                "role": "user",
+                                "content": farsi_text
+                            }
+                        ]
+                    )
+                    english_text = response.choices[0].message.content
+                    save_to_file(english_text, english_file)
+                    st.session_state.processing_status['translation'] = True
+                    update_progress(3)
+                    st.success("✅ Translation completed!")
+            else:
+                with open(english_file, 'r', encoding='utf-8') as f:
+                    english_text = f.read()
+                st.session_state.processing_status['translation'] = True
+                update_progress(3)
+                st.success("✅ Using saved translation!")
+            
+            st.session_state.english_text = english_text
+            
+            # Process English audio
+            if not use_saved_files or not os.path.exists(english_audio_file):
+                with st.spinner("🔊 Generating English audio..."):
+                    generate_english_audio_gpt4o(english_text, english_audio_file)
+                    st.session_state.processing_status['english_audio'] = True
+                    update_progress(4)
+                    st.success("✅ English audio generated!")
+            else:
+                st.session_state.processing_status['english_audio'] = True
+                update_progress(4)
+                st.success("✅ Using saved English audio!")
+            
+            # Process summary
+            if not use_saved_files or not os.path.exists(summary_file):
+                with st.spinner("📝 Creating summary..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "Create a clear, concise summary of the following text. Format your response exactly as follows, with each bullet point on its own line using markdown formatting:\n\n**Key Points:**\n\n* First main point\n\n* Second main point\n\n* Third main point\n\n**Key Takeaways:**\n\n* First takeaway\n\n* Second takeaway\n\n* Third takeaway\n\nMake sure each point is specific, actionable, and clearly stated. Each bullet point must be on its own line with a blank line before and after it."
+                            },
+                            {
+                                "role": "user",
+                                "content": english_text
+                            }
+                        ]
+                    )
+                    summary_text = response.choices[0].message.content
+                    save_to_file(summary_text, summary_file)
+                    st.session_state.processing_status['summary'] = True
+                    update_progress(5)
+                    st.success("✅ Summary generated!")
+            else:
+                with open(summary_file, 'r', encoding='utf-8') as f:
+                    summary_text = f.read()
+                st.session_state.processing_status['summary'] = True
+                update_progress(5)
+                st.success("✅ Using saved summary!")
+            
+            st.session_state.summary_text = summary_text
+            
+            # Clear progress indicators
+            progress_bar.empty()
+            status_text.empty()
             
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
