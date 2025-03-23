@@ -1,5 +1,7 @@
 # Persian-English Translator and Summarizer
 
+![Persian-English Translator Demo](persian-english-translator-demo.png)
+
 A powerful application that translates Persian (Farsi) audio to English text, generates English audio, and creates intelligent summaries.
 
 ## Features
