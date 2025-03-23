@@ -1,45 +1,66 @@
-# Video Speed Modification Script
+# Persian-English Translator and Summarizer
 
-This script allows you to modify the speed of a video file by creating three segments:
-1. First 30 seconds at normal speed
-2. Middle section (30s to 3m30s) at 3x speed
-3. Remaining duration at normal speed
+An advanced AI-powered system for translating Persian audio to English text and generating summaries. This application uses OpenAI's GPT-4 and Whisper models to provide high-quality translations and intelligent content analysis.
+
+## Features
+
+- 🎵 High-quality audio processing
+- 🗣️ Advanced Persian speech recognition
+- 🌍 Context-aware Persian to English translation
+- 🔊 Natural English audio generation
+- 📝 Intelligent content summarization
+- ⚡ Real-time processing with quality control
+- 🎯 Customizable processing options
 
 ## Prerequisites
 
-The script requires FFmpeg and Python 3 to be installed. You can install all dependencies automatically using the installation script.
+- Python 3.10 or higher
+- OpenAI API key
+- FFmpeg (for audio processing)
 
 ## Installation
 
-1. Clone this repository or download the files
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/alikhaledi/Persian-English-translator-summarizer-audio.git
+   cd Persian-English-translator-summarizer-audio
+   ```
+
 2. Make the installation script executable:
    ```bash
    chmod +x install_dependencies.sh
    ```
+
 3. Run the installation script:
    ```bash
    ./install_dependencies.sh
    ```
 
 The installation script will:
-- Detect your operating system (macOS or Linux)
-- Install FFmpeg if not already installed
-- Install Python dependencies from requirements.txt
+- Create and activate a conda environment named 'audio'
+- Install all required Python packages
+- Set up FFmpeg if not already installed
 
 ### Manual Installation
 
 If you prefer to install dependencies manually:
 
-#### FFmpeg Installation
-- macOS: `brew install ffmpeg`
-- Ubuntu/Debian: `sudo apt-get install ffmpeg`
-- RHEL/CentOS: `sudo yum install ffmpeg`
-- Fedora: `sudo dnf install ffmpeg`
+1. Create and activate a conda environment:
+   ```bash
+   conda create -n audio python=3.10
+   conda activate audio
+   ```
 
-#### Python Dependencies
-```bash
-pip3 install -r requirements.txt
-```
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Install FFmpeg:
+   - macOS: `brew install ffmpeg`
+   - Ubuntu/Debian: `sudo apt-get install ffmpeg`
+   - RHEL/CentOS: `sudo yum install ffmpeg`
+   - Fedora: `sudo dnf install ffmpeg`
 
 ## Configuration
 
@@ -61,40 +82,48 @@ pip3 install -r requirements.txt
    ```
 
 The script will:
+- Activate the conda environment
 - Check for all required dependencies
 - Verify the presence of your OpenAI API key
-- Install any missing Python packages
 - Start the Streamlit web interface
 
 ## Usage
 
-1. Place your video file (named `Recording_for_Ehsan.mov`) in the same directory as the script
-2. Make the script executable:
-   ```bash
-   chmod +x change_speed.sh
-   ```
-3. Run the script:
-   ```bash
-   ./change_speed.sh
-   ```
+1. Enter a YouTube URL containing Persian audio
+2. Enable/disable quality checks as needed
+3. Click "Process Everything!" to start the translation process
 
-The script will create a new file named `Recording_for_Ehsan_modified_speed.mov` in the same directory.
+The application will:
+- Download and process the audio
+- Transcribe Persian speech to text
+- Translate the text to English
+- Generate English audio
+- Create a summary of the content
 
-## How it Works
+## Quality Control
 
-The script:
-1. Splits the video into three parts
-2. Applies different speed modifications to each part
-3. Concatenates the parts back together
-4. Cleans up temporary files automatically
+The application includes a quality control system that:
+- Evaluates transcription accuracy
+- Checks translation quality
+- Provides feedback on processing results
+- Allows for multiple improvement iterations
+
+## Output Files
+
+The application generates several output files:
+- `{video_id}.mp3`: Original audio file
+- `{video_id}_farsi.txt`: Persian transcription
+- `{video_id}_english.txt`: English translation
+- `{video_id}_english.wav`: English audio
+- `{video_id}_summary.txt`: Content summary
 
 ## Notes
 
-- The script requires FFmpeg to be installed and accessible from the command line
-- The input video must be named `Recording_for_Ehsan.mov`
-- The output will be saved as `Recording_for_Ehsan_modified_speed.mov`
-- The script will automatically overwrite any existing output file without asking for confirmation
+- The application requires an active internet connection
+- Processing time depends on the audio length and quality settings
+- Quality checks may increase processing time but improve accuracy
+- All temporary files are automatically cleaned up after processing
 
 ## License
 
-Feel free to use and modify this script as needed. 
+Feel free to use and modify this application as needed. 
