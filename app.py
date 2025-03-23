@@ -9,14 +9,10 @@ from Farsi_audio_to_English_transcript import (
     save_to_file
 )
 import openai
-from dotenv import load_dotenv
 import time
 
-# Load environment variables
-load_dotenv()
-
 # Configure OpenAI
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = openai.OpenAI()
 
 # Set page config
 st.set_page_config(
