@@ -2,7 +2,7 @@
 
 ![Persian-English Translator Demo](persian-english-translator-demo.png)
 
-A powerful application that translates Persian (Farsi) audio to English text, generates English audio, and creates intelligent summaries.
+A sophisticated application that leverages advanced AI technologies to translate Persian (Farsi) audio to English text, generate high-quality English audio, and create intelligent summaries. Built with modern best practices and a focus on performance and user experience.
 
 ## Features
 
@@ -14,6 +14,18 @@ A powerful application that translates Persian (Farsi) audio to English text, ge
 - ⚡ Real-time processing with quality checks
 - 💾 Save and reuse processed files
 - 🎨 Beautiful dark-themed UI
+
+## Project Structure
+
+```
+persian-english-translator/
+├── persian_english_translator.py  # Core translation engine
+├── persian_english_webapp.py      # Streamlit web interface
+├── requirements.txt               # Python dependencies
+├── install_dependencies.sh        # Installation script
+├── run.sh                        # Application launcher
+└── output/                       # Processed files directory
+```
 
 ## Screenshot
 
@@ -59,7 +71,7 @@ conda activate audio
 
 2. Run the Streamlit app:
 ```bash
-streamlit run app.py
+streamlit run persian_english_webapp.py
 ```
 
 3. Open your browser and navigate to `http://localhost:8501`
@@ -88,7 +100,7 @@ All processed files are saved in the `output` directory:
 
 ## Quality Control
 
-The application includes a quality control system that:
+The application includes a sophisticated quality control system that:
 - Evaluates transcription accuracy
 - Improves translation quality
 - Ensures natural English output
