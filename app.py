@@ -5,8 +5,7 @@ from Farsi_audio_to_English_transcript import (
     transcribe_farsi,
     translate_farsi_to_english,
     generate_english_audio_gpt4o,
-    extract_video_id,
-    save_to_file
+    extract_video_id
 )
 import openai
 import time
@@ -290,7 +289,8 @@ if st.button("🚀 Process Everything!", disabled=not url):
             if not use_saved_files or not os.path.exists(farsi_file):
                 with st.spinner("🗣️ Transcribing to Farsi..."):
                     farsi_text = transcribe_farsi(audio_file, quality_check=quality_check)
-                    save_to_file(farsi_text, farsi_file)
+                    with open(farsi_file, 'w', encoding='utf-8') as f:
+                        f.write(farsi_text)
                     st.session_state.processing_status['transcription'] = True
                     update_progress(2)
                     st.success("✅ Transcription completed!")
@@ -320,7 +320,8 @@ if st.button("🚀 Process Everything!", disabled=not url):
                         ]
                     )
                     english_text = response.choices[0].message.content
-                    save_to_file(english_text, english_file)
+                    with open(english_file, 'w', encoding='utf-8') as f:
+                        f.write(english_text)
                     st.session_state.processing_status['translation'] = True
                     update_progress(3)
                     st.success("✅ Translation completed!")
@@ -362,7 +363,8 @@ if st.button("🚀 Process Everything!", disabled=not url):
                         ]
                     )
                     summary_text = response.choices[0].message.content
-                    save_to_file(summary_text, summary_file)
+                    with open(summary_file, 'w', encoding='utf-8') as f:
+                        f.write(summary_text)
                     st.session_state.processing_status['summary'] = True
                     update_progress(5)
                     st.success("✅ Summary generated!")
