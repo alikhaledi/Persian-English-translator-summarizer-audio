@@ -252,7 +252,7 @@ if st.button("🚀 Process Everything!", disabled=not url):
         
         # Update progress function
         def update_progress(step, total_steps=5):
-            progress = (step / total_steps) * 100
+            progress = step / total_steps  # This will give values between 0 and 1
             progress_bar.progress(progress)
             status_text.text(f"Processing step {step} of {total_steps}...")
         
